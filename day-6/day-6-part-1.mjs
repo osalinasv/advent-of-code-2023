@@ -1,6 +1,5 @@
 import fs from 'node:fs'
 
-// const input = fs.readFileSync('./sample.txt', 'utf8')
 const input = fs.readFileSync('./input.txt', 'utf8')
 const races = parseRaces(input)
 
