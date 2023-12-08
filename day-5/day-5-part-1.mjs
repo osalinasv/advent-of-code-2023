@@ -1,11 +1,7 @@
 import fs from 'node:fs'
 
-const LOG_ENABLED = false
-
 const input = fs.readFileSync('./input.txt', 'utf8')
-
 const seeds = parseSeeds(input)
-log({ seeds }, '\n')
 
 const seedToSoil = parseMap(input, 'seed-to-soil')
 const soilToFertilizer = parseMap(input, 'soil-to-fertilizer')
@@ -59,47 +55,30 @@ function parseMap(input, label) {
     index = endOfLineIndex + 2
   }
 
-  log({ label, rawRanges, ranges }, '\n')
   return curryMapValue(ranges)
 }
 
 function parseRange(line) {
-  const [destStart, sourceMin, length] = line.split(' ').map((s) => parseInt(s))
+  const [destStart, sourceStart, length] = line.split(' ').map((s) => parseInt(s))
 
   return {
-    length,
     destStart,
-    sourceMin,
-    sourceMax: sourceMin + length - 1,
+    sourceStart,
+    sourceEnd: sourceStart + length,
   }
 }
 
 function curryMapValue(ranges) {
-  const memo = new Map()
-  return (sourceVal) => memoMapValue(ranges, sourceVal, memo)
-}
-
-function memoMapValue(ranges, sourceVal, memo) {
-  if (memo.has(sourceVal)) return memo.get(sourceVal)
-
-  const mapped = mapValue(ranges, sourceVal)
-  memo.set(sourceVal, mapped)
-
-  return mapped
+  return (sourceVal) => mapValue(ranges, sourceVal)
 }
 
 function mapValue(ranges, sourceVal) {
   for (const range of ranges) {
-    if (sourceVal >= range.sourceMin && sourceVal <= range.sourceMax) {
-      const sourceOffset = sourceVal - range.sourceMin
+    if (sourceVal >= range.sourceStart && sourceVal < range.sourceEnd) {
+      const sourceOffset = sourceVal - range.sourceStart
       return range.destStart + sourceOffset
     }
   }
 
   return sourceVal
-}
-
-function log(...args) {
-  if (!LOG_ENABLED) return
-  console.log(...args)
 }
