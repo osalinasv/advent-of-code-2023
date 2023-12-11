@@ -1,59 +1,77 @@
 import fs from 'node:fs'
 
+const VALIDATE_SAME_DISTANCE_TO_SELF = false
+
 const input = fs.readFileSync(process.argv[2], 'utf8')
 const [directions, rawNodes] = input.split('\r\n\r\n')
 
 const map = parseMap(rawNodes)
-const nodes = Array.from(map.keys())
-  .filter((n) => n[2] === 'A')
-  .map((n) => ({ start: n, prev: null, current: n }))
+const startNodes = Array.from(map.keys()).filter((n) => n[2] === 'A')
 
-const steps = run(nodes)
-console.log({ steps })
+const traversalCosts = []
+for (const start of startNodes) {
+  const [steps, end] = traverseUntilZ(start)
+  traversalCosts.push(steps)
 
-function run(nodes) {
-  let pending = nodes.length
+  if (VALIDATE_SAME_DISTANCE_TO_SELF) {
+    const [stepsFromToSelf] = traverseUntilSelf(end)
+    if (stepsFromToSelf !== steps) throw new Error('Expected traversal from self to be equal to traversal to self')
+  }
+}
+
+console.log({ traversalCosts })
+
+let minCost = 1
+for (let i = 0; i < traversalCosts.length; i++) {
+  minCost = (minCost * traversalCosts[i]) / gcd(minCost, traversalCosts[i])
+}
+
+console.log({ minCost })
+
+function gcd(a, b) {
+  return b === 0 ? a : gcd(b, a % b)
+}
+
+function traverseUntilSelf(start) {
+  let node = start
   let steps = 0
   let direction = 0
 
-  // console.log({ nodes, pending })
-  let _forceQuit = false
+  while (steps === 0 || node != start) {
+    const connections = map.get(node)
 
-  while (pending > 0) {
-    const dir = directions[direction]
-    console.log(steps + 1, dir)
-
-    for (const node of nodes) {
-      const connections = map.get(node.current)
-
-      node.prev = node.current
-      if (dir === 'L') {
-        node.current = connections.left
-      } else {
-        node.current = connections.right
-      }
-
-      if (!node.finished && node.current[2] === 'Z') {
-        node.finished = true
-        pending--
-      } else if (node.finished && node.current[2] !== 'Z') {
-        node.finished = false
-        pending++
-
-        // _forceQuit = true
-      }
-
-      console.log(node)
+    if (directions[direction] === 'L') {
+      node = connections.left
+    } else {
+      node = connections.right
     }
 
-    console.log()
     steps++
     direction = (direction + 1) % directions.length
-
-    // if (_forceQuit) return steps
   }
 
-  return steps
+  return [steps, node]
+}
+
+function traverseUntilZ(start) {
+  let node = start
+  let steps = 0
+  let direction = 0
+
+  while (node[2] !== 'Z') {
+    const connections = map.get(node)
+
+    if (directions[direction] === 'L') {
+      node = connections.left
+    } else {
+      node = connections.right
+    }
+
+    steps++
+    direction = (direction + 1) % directions.length
+  }
+
+  return [steps, node]
 }
 
 function parseMap(nodes) {
