@@ -30,18 +30,18 @@ while (traverse) {
     traversal.direction = getNextDirection(traversal.current, traversal.direction)
   }
 
-  traverse = !coordsEqual(traversals[0].current, traversals[1].current)
+  traverse = !pointsEqual(traversals[0].current, traversals[1].current)
 }
 
 console.log(traversals)
 
-function getNextDirection(coord, incoming) {
-  const pipe = map[coord[1]][coord[0]]
+function getNextDirection(point, incoming) {
+  const pipe = map[point[1]][point[0]]
   if (pipe === '|' || pipe === '-') return incoming
 
   const intakes = INTAKE_MASKS.get(pipe)
   for (const intake of intakes) {
-    if (!coordsEqual(intake, incoming)) {
+    if (!pointsEqual(intake, incoming)) {
       return [-intake[0], -intake[1]]
     }
   }
@@ -69,15 +69,15 @@ function getStartingDirections(start) {
 }
 
 function canIntakeFrom(ref, dir) {
-  const coord = [ref[0] + dir[0], ref[1] + dir[1]]
-  if (!isInBounds(coord)) return false
+  const point = [ref[0] + dir[0], ref[1] + dir[1]]
+  if (!isInBounds(point)) return false
 
-  const pipe = map[coord[1]][coord[0]]
+  const pipe = map[point[1]][point[0]]
   const intakes = INTAKE_MASKS.get(pipe)
   if (!intakes) return false
 
   for (const intake of intakes) {
-    if (coordsEqual(intake, dir)) {
+    if (pointsEqual(intake, dir)) {
       return true
     }
   }
@@ -85,11 +85,11 @@ function canIntakeFrom(ref, dir) {
   return false
 }
 
-function isInBounds(coord) {
-  return coord[0] >= 0 && coord[0] < map[0].length && coord[1] >= 0 && coord[1] < map.length
+function isInBounds(point) {
+  return point[0] >= 0 && point[0] < map[0].length && point[1] >= 0 && point[1] < map.length
 }
 
-function coordsEqual(a, b) {
+function pointsEqual(a, b) {
   return a[0] === b[0] && a[1] === b[1]
 }
 
